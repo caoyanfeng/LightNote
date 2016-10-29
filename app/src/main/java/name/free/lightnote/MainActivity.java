@@ -19,14 +19,6 @@ import name.free.lithtnote.LightNote;
 import name.free.lithtnote.LightNoteImp;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String BOLD = "<b>Bold</b><br><br>";
-    private static final String ITALIT = "<i>Italic</i><br><br>";
-    private static final String UNDERLINE = "<u>Underline</u><br><br>";
-    private static final String STRIKETHROUGH = "<s>Strikethrough</s><br><br>"; // <s> or <strike> or <del>
-    private static final String BULLET = "<ul><li>asdfg</li></ul>";
-    private static final String QUOTE = "<blockquote>Quote</blockquote>";
-    private static final String LINK = "<a href=\"https://github.com/mthli/Knife\">Link</a><br><br>";
-    private static final String EXAMPLE = BOLD + ITALIT + UNDERLINE + STRIKETHROUGH + BULLET + QUOTE + LINK;
     private LightNoteImp lightNote;
 
     @Override
@@ -34,8 +26,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         lightNote=(LightNoteImp) findViewById(R.id.light_note);
-        lightNote.fromHtml(EXAMPLE);
-        lightNote.setSelection(lightNote.getEditableText().length());
         setupBold();
         setupItalic();
         setupUnderline();
@@ -51,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
         bold.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lightNote.bold(!lightNote.contains(LightNote.FORMAT_BOLD));
+                lightNote.bold();
             }
         });
 
@@ -69,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         italic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lightNote.italic(!lightNote.contains(LightNote.FORMAT_ITALIC));
+                lightNote.italic();
             }
         });
 
@@ -87,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
         underline.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lightNote.underline(!lightNote.contains(lightNote.FORMAT_UNDERLINED));
+                lightNote.underline();
             }
         });
 
@@ -105,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         strikethrough.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lightNote.strikethrough(!lightNote.contains(lightNote.FORMAT_STRIKETHROUGH));
+                lightNote.strikethrough();
             }
         });
 
@@ -123,7 +113,7 @@ public class MainActivity extends AppCompatActivity {
         bullet.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lightNote.bullet(!lightNote.contains(LightNote.FORMAT_BULLET));
+                lightNote.bullet();
             }
         });
 
@@ -143,7 +133,7 @@ public class MainActivity extends AppCompatActivity {
         quote.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                lightNote.quote(!lightNote.contains(LightNote.FORMAT_QUOTE));
+                lightNote.quote();
             }
         });
 

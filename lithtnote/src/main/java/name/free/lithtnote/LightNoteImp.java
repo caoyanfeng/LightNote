@@ -26,9 +26,12 @@ import java.util.List;
  * <p>LightNote实现类</p>
  * <p>参考：https://github.com/mthli/Knife</p>
  * <p>相对于Knife，修复的bug包括</p>
- * <p>相对于Knife，新功能优化包括：</p>
- * <p>相对于Knife，做的功能优化包括：</p>
+ * <p>1、{@link #bullet()}</p>
+ * <p>2、{@link #quote()}}</p>
+ * <p>相对于Knife，功能优化包括：</p>
  * <p>1、{@link #contains(int)}</p>
+ * <p>2、{@link #bullet()}</p>
+ * <p>3、{@link #quote()}}</p>
  */
 public class LightNoteImp extends EditText implements LightNote {
     private int bulletColor = 0;//bullet的颜色
@@ -68,9 +71,10 @@ public class LightNoteImp extends EditText implements LightNote {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(attrs);
     }
+
     /**
-    * 从R.styleable.LightNoteImp中导入XML属性
-    * */
+     * 从R.styleable.LightNoteImp中导入XML属性
+     */
     private void init(AttributeSet attrs) {
         TypedArray array = getContext().obtainStyledAttributes(attrs, R.styleable.LightNoteImp);
         bulletColor = array.getColor(R.styleable.LightNoteImp_bulletColor, 0);//项目符号的颜色
@@ -89,6 +93,7 @@ public class LightNoteImp extends EditText implements LightNote {
         }
 
     }
+
     @Override
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
@@ -101,9 +106,11 @@ public class LightNoteImp extends EditText implements LightNote {
         super.onDetachedFromWindow();
         removeTextChangedListener(this);
     }
+
     // BoldSpan & ItalicSpan ===================================================================================
     @Override
-    public void bold(boolean valid) {
+    public void bold() {
+        boolean valid=!contains(LightNote.FORMAT_BOLD);
         if (valid) {
             styleValid(Typeface.BOLD);
         } else {
@@ -112,7 +119,8 @@ public class LightNoteImp extends EditText implements LightNote {
     }
 
     @Override
-    public void italic(boolean valid) {
+    public void italic() {
+        boolean valid=!contains(LightNote.FORMAT_ITALIC);
         if (valid) {
             styleValid(Typeface.ITALIC);
         } else {
@@ -142,7 +150,7 @@ public class LightNoteImp extends EditText implements LightNote {
     }
 
     public void styleInValid(int style) {
-        styleInValid(style,getSelectionStart(),getSelectionEnd());
+        styleInValid(style, getSelectionStart(), getSelectionEnd());
 
     }
 
@@ -169,11 +177,11 @@ public class LightNoteImp extends EditText implements LightNote {
                 int mStart = editable.getSpanStart(span);//span开始的位置
                 int mEnd = editable.getSpanEnd(span);//span结束的位置
                 editable.removeSpan(span);
-                if (mStart<start){
-                    styleValid(style,mStart,start);
+                if (mStart < start) {
+                    styleValid(style, mStart, start);
                 }
-                if (mEnd>end) {
-                    styleValid(style,end,mEnd);
+                if (mEnd > end) {
+                    styleValid(style, end, mEnd);
                 }
             }
         }
@@ -182,7 +190,7 @@ public class LightNoteImp extends EditText implements LightNote {
 
     /**
      * @return start和end的范围刚好在style类型的span的起点和终点内，即[start,end]∈[mStart,mEnd]，则返回true，否则返回false。
-     * */
+     */
     private boolean containStyle(int style, int start, int end) {
         switch (style) {
             case Typeface.NORMAL:
@@ -207,11 +215,11 @@ public class LightNoteImp extends EditText implements LightNote {
             }
         } else {
             StyleSpan[] spans = editable.getSpans(start, end, StyleSpan.class);
-            for (StyleSpan span:spans){
-                if (span.getStyle() == style){
+            for (StyleSpan span : spans) {
+                if (span.getStyle() == style) {
                     int mStart = editable.getSpanStart(span);//span开始的位置
                     int mEnd = editable.getSpanEnd(span);//span结束的位置
-                    if (start>=mStart&&end<=mEnd){
+                    if (start >= mStart && end <= mEnd) {
                         return true;
                     }
                 }
@@ -220,15 +228,18 @@ public class LightNoteImp extends EditText implements LightNote {
         }
 
     }
+
     // UnderlineSpan ===================================================================================
     @Override
-    public void underline(boolean valid) {
+    public void underline() {
+        boolean valid=!contains(FORMAT_UNDERLINED);
         if (valid) {
             underlineValid();
         } else {
             underlineInValid();
         }
     }
+
     private void underlineValid() {
         underlineValid(getSelectionStart(), getSelectionEnd());
     }
@@ -246,6 +257,7 @@ public class LightNoteImp extends EditText implements LightNote {
         underlineInValid(getSelectionStart(), getSelectionEnd());
 
     }
+
     //调试
     @Override
     public void underlineInValid(int start, int end) {
@@ -258,19 +270,19 @@ public class LightNoteImp extends EditText implements LightNote {
             int mStart = editable.getSpanStart(span);//span开始的位置
             int mEnd = editable.getSpanEnd(span);//span结束的位置
             editable.removeSpan(span);
-            if (mStart<start){
-                underlineValid(mStart,start);
+            if (mStart < start) {
+                underlineValid(mStart, start);
             }
-            if (mEnd>end) {
-                underlineValid(end,mEnd);
+            if (mEnd > end) {
+                underlineValid(end, mEnd);
             }
         }
     }
 
     /**
      * @return start和end的范围刚好在underline类型的span的起点和终点内，即[start,end]∈[mStart,mEnd]，则返回true，否则返回false。
-     * */
-    protected boolean containUnderline(int start, int end) {
+     */
+    protected <T> boolean containStyle(Class<T> t, int start, int end) {
         if (start > end) {
             return false;
         }
@@ -279,25 +291,27 @@ public class LightNoteImp extends EditText implements LightNote {
             if (start - 1 < 0 || start + 1 > getEditableText().length()) {
                 return false;
             } else {
-                UnderlineSpan[] before = editable.getSpans(start - 1, start, UnderlineSpan.class);
-                UnderlineSpan[] after = editable.getSpans(start, start + 1, UnderlineSpan.class);
+                T[] before = editable.getSpans(start - 1, start, t);
+                T[] after = editable.getSpans(start, start + 1, t);
                 return before.length > 0 && after.length > 0;
             }
         } else {
-            UnderlineSpan[] spans = editable.getSpans(start, end, UnderlineSpan.class);
-            for (UnderlineSpan span:spans){
-                    int mStart = editable.getSpanStart(span);//span开始的位置
-                    int mEnd = editable.getSpanEnd(span);//span结束的位置
-                    if (start>=mStart&&end<=mEnd){
-                        return true;
+            T[] spans = editable.getSpans(start, end, t);
+            for (T span : spans) {
+                int mStart = editable.getSpanStart(span);//span开始的位置
+                int mEnd = editable.getSpanEnd(span);//span结束的位置
+                if (start >= mStart && end <= mEnd) {
+                    return true;
                 }
             }
             return false;
         }
     }
+
     // StrikethroughSpan ===================================================================================
     @Override
-    public void strikethrough(boolean valid) {
+    public void strikethrough() {
+        boolean valid=!contains(FORMAT_STRIKETHROUGH);
         if (valid) {
             strikethroughValid();
         } else {
@@ -306,7 +320,7 @@ public class LightNoteImp extends EditText implements LightNote {
     }
 
     public void strikethroughValid() {
-        strikethroughValid(getSelectionStart(),getSelectionEnd());
+        strikethroughValid(getSelectionStart(), getSelectionEnd());
 
     }
 
@@ -320,7 +334,7 @@ public class LightNoteImp extends EditText implements LightNote {
     }
 
     public void strikethroughInValid() {
-        strikethroughInValid(getSelectionStart(),getSelectionEnd());
+        strikethroughInValid(getSelectionStart(), getSelectionEnd());
     }
 
     @Override
@@ -328,311 +342,108 @@ public class LightNoteImp extends EditText implements LightNote {
         if (start >= end) {
             return;
         }
-        Editable editable=getEditableText();
+        Editable editable = getEditableText();
         StrikethroughSpan[] spans = editable.getSpans(start, end, StrikethroughSpan.class);
         for (StrikethroughSpan span : spans) {
             int mStart = editable.getSpanStart(span);//span开始的位置
             int mEnd = editable.getSpanEnd(span);//span结束的位置
             editable.removeSpan(span);
-            if (mStart<start) {
-               strikethroughValid(mStart,start);
+            if (mStart < start) {
+                strikethroughValid(mStart, start);
             }
-            if (mEnd>end){
-                strikethroughValid(end,mEnd);
+            if (mEnd > end) {
+                strikethroughValid(end, mEnd);
             }
         }
 
-    }
-    /**
-     * @return start和end的范围刚好在strikethrough类型的span的起点和终点内，即[start,end]∈[mStart,mEnd]，则返回true，否则返回false。
-     * */
-    private boolean containStrikethrough(int start, int end) {
-        if (start > end) {
-            return false;
-        }
-        Editable editable=getEditableText();
-        if (start == end) {
-            if (start - 1 < 0 || start + 1 > editable.length()) {
-                return false;
-            } else {
-                StrikethroughSpan[] before = editable.getSpans(start - 1, start, StrikethroughSpan.class);
-                StrikethroughSpan[] after = editable.getSpans(start, start + 1, StrikethroughSpan.class);
-                return before.length > 0 && after.length > 0;
-            }
-        } else {
-            StrikethroughSpan[] spans = editable.getSpans(start, end, StrikethroughSpan.class);
-            for (StrikethroughSpan span:spans){
-                int mStart = editable.getSpanStart(span);//span开始的位置
-                int mEnd = editable.getSpanEnd(span);//span结束的位置
-                if (start>=mStart&&end<=mEnd){
-                    return true;
-                }
-            }
-            return false;
-
-        }
     }
     // BulletSpan ===================================================================================
-    @Override
-    public void bullet(boolean valid) {
-        if (valid) {
-            bulletValid();
-        } else {
-            bulletInvalid();
-        }
-    }
 
-    protected void bulletValid(){
-        String[] lines = TextUtils.split(getEditableText().toString(), "\n");
-        for (int i=0;i<lines.length;i++){
-            if (containBullet(i)){//第i行已经包含了，就continue
-                continue;
-            }
-            int lineStart=0;
-            for (int j=0;j<i;j++){
-                lineStart+=lines[j].length()+1;
-            }
-            int lineEnd=lineStart+lines[i].length();
-            if (lineStart>=lineEnd)continue;
-            // Find selection area inside
-            int bulletStart = 0;
-            int bulletEnd = 0;
-            if (lineStart <= getSelectionStart() && getSelectionEnd() <= lineEnd) {
-                bulletStart = lineStart;
-                bulletEnd = lineEnd;
-            } else if (getSelectionStart() <= lineStart && lineEnd <= getSelectionEnd()) {
-                bulletStart = lineStart;
-                bulletEnd = lineEnd;
-            }
-
-            if (bulletStart < bulletEnd) {
-                getEditableText().setSpan(new BulletSpan(), bulletStart, bulletEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
-
-        }
-    }
-
-    protected void bulletInvalid() {
-        String[] lines = TextUtils.split(getEditableText().toString(), "\n");
-
-        for (int i = 0; i < lines.length; i++) {
-            if (!containBullet(i)) {
-                continue;
-            }
-
-            int lineStart = 0;
-            for (int j = 0; j < i; j++) {
-                lineStart = lineStart + lines[j].length() + 1;
-            }
-
-            int lineEnd = lineStart + lines[i].length();
-            if (lineStart >= lineEnd) {
-                continue;
-            }
-
-            int bulletStart = 0;
-            int bulletEnd = 0;
-            if (lineStart <= getSelectionStart() && getSelectionEnd() <= lineEnd) {
-                bulletStart = lineStart;
-                bulletEnd = lineEnd;
-            } else if (getSelectionStart() <= lineStart && lineEnd <= getSelectionEnd()) {
-                bulletStart = lineStart;
-                bulletEnd = lineEnd;
-            }
-
-            if (bulletStart < bulletEnd) {
-                BulletSpan[] spans = getEditableText().getSpans(bulletStart, bulletEnd, BulletSpan.class);
-                for (BulletSpan span : spans) {
-                    getEditableText().removeSpan(span);
-                }
-            }
-        }
-    }
-
-
-    protected boolean containBullet() {
-        String[] lines = TextUtils.split(getEditableText().toString(), "\n");
-        List<Integer> list = new ArrayList<>();
-
-        for (int i = 0; i < lines.length; i++) {
-            int lineStart = 0;
-            for (int j = 0; j < i; j++) {
-                lineStart+=lines[j].length() + 1;
-            }
-
-            int lineEnd = lineStart + lines[i].length();
-            if (lineStart >= lineEnd) {
-                continue;
-            }
-
-            if (lineStart <= getSelectionStart() && getSelectionEnd() <= lineEnd) {
-                list.add(i);
-            } else if (getSelectionStart() <= lineStart && lineEnd <= getSelectionEnd()) {
-                list.add(i);
-            }
-        }
-
-        for (Integer i : list) {
-            if (!containBullet(i)) {
-                return false;
-            }
-        }
-        return true;
-    }
     /**
-     * 计算第index行是否有Bullet
-     * @param index 选中的区域里面，第一行为0行，这是第index行
-     * @return 已经包含Bullet则返回true,否则返回false
-     * */
-    protected boolean containBullet(int index) {
-        String[] lines = TextUtils.split(getEditableText().toString(), "\n");
-        if (index < 0 || index >= lines.length) {
-            return false;
-        }
-
-        int start = 0;
-        for (int i = 0; i < index; i++) {
-            start = start + lines[i].length() + 1;
-        }
-
-        int end = start + lines[index].length();
-        if (start >= end) {
-            return false;
-        }
-
-        BulletSpan[] spans = getEditableText().getSpans(start, end, BulletSpan.class);
-        return spans.length > 0;
+     * <p>三种情况</p>
+     * <p>1、选中区域没有bullet,则添加所有项目符号</p>
+     * <p>2、选中区域每一段都有bullet，则去除所有项目符号</p>
+     * <p>3、选中区域部分段落有bullet，则为没有bullet的段落添加bullet</p>
+     * <p>这里的操作是，为每一段添加bullet，并记录所有span，然后判断是否是第2种情况，如果是，则删除所有bullet</p>
+     */
+    @Override
+    public void bullet() {
+        paragraphSymbol(BulletSpan.class);
     }
+
     // QuoteSpan ===================================================================================
     @Override
-    public void quote(boolean valid) {
-        if (valid) {
-            quoteValid();
-        } else {
-            quoteInvalid();
-        }
+    public void quote() {
+        paragraphSymbol(QuoteSpan.class);
     }
 
-    protected void quoteValid() {
+    /**
+     * 泛型类，用于段前加上符号，例如quote和bullet.
+     *
+     * @param t {@link QuoteSpan},{@link BulletSpan}
+     */
+    public <T> void paragraphSymbol(Class<T> t) {
         String[] lines = TextUtils.split(getEditableText().toString(), "\n");
-
+        int start = getSelectionStart();//选中位置的起点
+        int end = getSelectionEnd();//选中位置的终点
+        int paragraphStart = 0;//每一段开始位置
+        int bulletSum = 0;//选中区域bullet的个数
+        int lineSum = 0;//选中区域的非空行数
+        List<T[]> spanList = new ArrayList<>();//选中区域所有的bullet
         for (int i = 0; i < lines.length; i++) {
-            if (containQuote(i)) {
-                continue;
+            int paragraphEnd = paragraphStart + lines[i].length();//每一段的结尾位置
+            if (lineSum > 0) {//已经遇到选中区域的起点
+                if (lines[i].length() != 0) {
+                    lineSum++;
+                }
+                T[] spans = getEditableText().getSpans(paragraphStart, paragraphEnd, t);
+                if (spans.length == 0) {
+                    paragraphSymbol(t, paragraphStart, paragraphEnd);
+                    spans = getEditableText().getSpans(paragraphStart, paragraphEnd, t);
+                } else {
+                    bulletSum++;
+                }
+                spanList.add(spans);
+                if (paragraphEnd >= end) {//选中的最后一行
+                    break;
+                }
+            } else {//还没有遇到选中区域的起点
+                if (paragraphEnd >= start) {//选中的第1行
+                    if (lines[i].length() != 0) {
+                        lineSum++;
+                    }
+                    T[] spans = getEditableText().getSpans(paragraphStart, paragraphEnd, t);
+                    if (spans.length == 0) {
+                        paragraphSymbol(t, paragraphStart, paragraphEnd);
+                        spans = getEditableText().getSpans(paragraphStart, paragraphEnd, t);
+                    } else {
+                        bulletSum++;
+                    }
+                    spanList.add(spans);
+                }
+                if (paragraphEnd >= end) {//表明只选了i行
+                    break;
+                }
             }
-
-            int lineStart = 0;
-            for (int j = 0; j < i; j++) {
-                lineStart = lineStart + lines[j].length() + 1; // \n
-            }
-
-            int lineEnd = lineStart + lines[i].length();
-            if (lineStart >= lineEnd) {
-                continue;
-            }
-
-            int quoteStart = 0;
-            int quoteEnd = 0;
-            if (lineStart <= getSelectionStart() && getSelectionEnd() <= lineEnd) {
-                quoteStart = lineStart;
-                quoteEnd = lineEnd;
-            } else if (getSelectionStart() <= lineStart && lineEnd <= getSelectionEnd()) {
-                quoteStart = lineStart;
-                quoteEnd = lineEnd;
-            }
-
-            if (quoteStart < quoteEnd) {
-                getEditableText().setSpan(new QuoteSpan(), quoteStart, quoteEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            }
+            paragraphStart = paragraphEnd + 1;//下一个位置,加1是计入了\n
         }
-    }
-
-    protected void quoteInvalid() {
-        String[] lines = TextUtils.split(getEditableText().toString(), "\n");
-
-        for (int i = 0; i < lines.length; i++) {
-            if (!containQuote(i)) {
-                continue;
-            }
-
-            int lineStart = 0;
-            for (int j = 0; j < i; j++) {
-                lineStart = lineStart + lines[j].length() + 1;
-            }
-
-            int lineEnd = lineStart + lines[i].length();
-            if (lineStart >= lineEnd) {
-                continue;
-            }
-
-            int quoteStart = 0;
-            int quoteEnd = 0;
-            if (lineStart <= getSelectionStart() && getSelectionEnd() <= lineEnd) {
-                quoteStart = lineStart;
-                quoteEnd = lineEnd;
-            } else if (getSelectionStart() <= lineStart && lineEnd <= getSelectionEnd()) {
-                quoteStart = lineStart;
-                quoteEnd = lineEnd;
-            }
-
-            if (quoteStart < quoteEnd) {
-                QuoteSpan[] spans = getEditableText().getSpans(quoteStart, quoteEnd, QuoteSpan.class);
-                for (QuoteSpan span : spans) {
-                    getEditableText().removeSpan(span);
+        if (lineSum == bulletSum && spanList.size() > 0) {//表明选中的部分都是bullet,则要将其全部去除
+            for (T[] bulletSpan : spanList) {
+                for (T span : bulletSpan) {
+                    getText().removeSpan(span);
                 }
             }
         }
     }
 
-    protected boolean containQuote() {
-        String[] lines = TextUtils.split(getEditableText().toString(), "\n");
-        List<Integer> list = new ArrayList<>();
-
-        for (int i = 0; i < lines.length; i++) {
-            int lineStart = 0;
-            for (int j = 0; j < i; j++) {
-                lineStart = lineStart + lines[j].length() + 1;
-            }
-
-            int lineEnd = lineStart + lines[i].length();
-            if (lineStart >= lineEnd) {
-                continue;
-            }
-
-            if (lineStart <= getSelectionStart() && getSelectionEnd() <= lineEnd) {
-                list.add(i);
-            } else if (getSelectionStart() <= lineStart && lineEnd <= getSelectionEnd()) {
-                list.add(i);
-            }
+    private <T> void paragraphSymbol(Class<T> t, int start, int end) {
+        try {
+            getEditableText().setSpan(t.newInstance(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
         }
-
-        for (Integer i : list) {
-            if (!containQuote(i)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    protected boolean containQuote(int index) {
-        String[] lines = TextUtils.split(getEditableText().toString(), "\n");
-        if (index < 0 || index >= lines.length) {
-            return false;
-        }
-
-        int start = 0;
-        for (int i = 0; i < index; i++) {
-            start = start + lines[i].length() + 1;
-        }
-
-        int end = start + lines[index].length();
-        if (start >= end) {
-            return false;
-        }
-
-        QuoteSpan[] spans = getEditableText().getSpans(start, end, QuoteSpan.class);
-        return spans.length > 0;
     }
 
     // URLSpan =====================================================================================
@@ -648,6 +459,7 @@ public class LightNoteImp extends EditText implements LightNote {
             linkInvalid(start, end);
         }
     }
+
     protected void linkValid(String link, int start, int end) {
         if (start >= end) {
             return;
@@ -668,6 +480,7 @@ public class LightNoteImp extends EditText implements LightNote {
             getEditableText().removeSpan(span);
         }
     }
+
     protected boolean containLink(int start, int end) {
         if (start > end) {
             return false;
@@ -707,13 +520,9 @@ public class LightNoteImp extends EditText implements LightNote {
             case FORMAT_ITALIC:
                 return containStyle(Typeface.ITALIC, getSelectionStart(), getSelectionEnd());
             case FORMAT_UNDERLINED:
-                return containUnderline(getSelectionStart(), getSelectionEnd());
+                return containStyle(UnderlineSpan.class, getSelectionStart(), getSelectionEnd());
             case FORMAT_STRIKETHROUGH:
-                return containStrikethrough(getSelectionStart(), getSelectionEnd());
-            case FORMAT_BULLET:
-                return containBullet();
-            case FORMAT_QUOTE:
-                return containQuote();
+                return containStyle(StrikethroughSpan.class, getSelectionStart(), getSelectionEnd());
             case FORMAT_LINK:
                 return containLink(getSelectionStart(), getSelectionEnd());
             default:
@@ -723,16 +532,18 @@ public class LightNoteImp extends EditText implements LightNote {
 
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-        if (!historyEnable||historyWorking){
+        if (!historyEnable || historyWorking) {
             return;
         }
-        inputBefore=new SpannableStringBuilder(s);
+        inputBefore = new SpannableStringBuilder(s);
 
     }
+
     @Override
     public void onTextChanged(CharSequence text, int start, int before, int count) {
         // DO NOTHING HERE
     }
+
     @Override
     public void afterTextChanged(Editable s) {
         if (!historyEnable || historyWorking) {
@@ -743,109 +554,54 @@ public class LightNoteImp extends EditText implements LightNote {
         if (s != null && s.toString().equals(inputBefore.toString())) {
             return;
         }
-        if (historyList.size()>=historySize){//超过100次的保存限额
+        if (historyList.size() >= historySize) {//超过100次的保存限额
             historyList.remove(0);
         }
         historyList.add(inputBefore);
-        historyCursor=historyList.size();
+        historyCursor = historyList.size();
 
     }
+
     // Redo/Undo ===================================================================================
-    public void redo(){
-        if (!redoValid()){
+    public void redo() {
+        if (!redoValid()) {
             return;
         }
-        historyWorking=true;
-        if (historyCursor>=historyList.size()-1){
-            historyCursor=historyList.size();
+        historyWorking = true;
+        if (historyCursor >= historyList.size() - 1) {
+            historyCursor = historyList.size();
             setText(inputLast);
-        }else {
+        } else {
             historyCursor++;
             setText(historyList.get(historyCursor));
         }
         setSelection(getEditableText().length());
-        historyWorking=false;
+        historyWorking = false;
     }
-    public void undo(){
-        if (!undoValid())return;
-        historyWorking=true;
+
+    public void undo() {
+        if (!undoValid()) return;
+        historyWorking = true;
         historyCursor--;
         setText(historyList.get(historyCursor));
         setSelection(getEditableText().length());
-        historyWorking=false;
-    }
-    public boolean redoValid(){
-        if (!historyEnable||historyWorking){
-            return false;
-        }
-        return historyCursor<historyList.size()-1||historyCursor>=historyList.size()-1&&inputLast!=null;
+        historyWorking = false;
     }
 
-    public boolean undoValid(){
-        if (!historyEnable||historyWorking){
+    public boolean redoValid() {
+        if (!historyEnable || historyWorking) {
             return false;
         }
-        if (historyList.size()<=0||historyCursor<=0){
+        return historyCursor < historyList.size() - 1 || historyCursor >= historyList.size() - 1 && inputLast != null;
+    }
+
+    public boolean undoValid() {
+        if (!historyEnable || historyWorking) {
+            return false;
+        }
+        if (historyList.size() <= 0 || historyCursor <= 0) {
             return false;
         }
         return true;
-    }
-    public void clearHistory(){
-        if (historyList!=null){
-            historyList.clear();
-        }
-    }
-
-    public void hideSoftInput(){
-        clearFocus();
-        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(getWindowToken(), 0);
-    }
-
-    public void showSoftInput() {
-        requestFocus();
-        InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        imm.toggleSoftInput(InputMethodManager.SHOW_FORCED, 0);
-    }
-
-    @Override
-    public String toHtml() {
-        return Parser.toHtml(getEditableText());
-    }
-
-    @Override
-    public void fromHtml(String source) {
-        SpannableStringBuilder builder = new SpannableStringBuilder();
-        builder.append(Parser.fromHtml(source));
-        switchToKnifeStyle(builder, 0, builder.length());
-        setText(builder);
-    }
-
-    protected void switchToKnifeStyle(Editable editable, int start, int end) {
-        BulletSpan[] bulletSpans = editable.getSpans(start, end, BulletSpan.class);
-        for (BulletSpan span : bulletSpans) {
-            int spanStart = editable.getSpanStart(span);
-            int spanEnd = editable.getSpanEnd(span);
-            spanEnd = 0 < spanEnd && spanEnd < editable.length() && editable.charAt(spanEnd) == '\n' ? spanEnd - 1 : spanEnd;
-            editable.removeSpan(span);
-            editable.setSpan(new BulletSpan(), spanStart, spanEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-
-        QuoteSpan[] quoteSpans = editable.getSpans(start, end, QuoteSpan.class);
-        for (QuoteSpan span : quoteSpans) {
-            int spanStart = editable.getSpanStart(span);
-            int spanEnd = editable.getSpanEnd(span);
-            spanEnd = 0 < spanEnd && spanEnd < editable.length() && editable.charAt(spanEnd) == '\n' ? spanEnd - 1 : spanEnd;
-            editable.removeSpan(span);
-            editable.setSpan(new QuoteSpan(), spanStart, spanEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
-
-        URLSpan[] urlSpans = editable.getSpans(start, end, URLSpan.class);
-        for (URLSpan span : urlSpans) {
-            int spanStart = editable.getSpanStart(span);
-            int spanEnd = editable.getSpanEnd(span);
-            editable.removeSpan(span);
-            editable.setSpan(new URLSpan(span.getURL()), spanStart, spanEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        }
     }
 }

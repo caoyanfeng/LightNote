@@ -17,34 +17,29 @@ public interface LightNote extends TextWatcher{
     int FORMAT_LINK = 0x07;
     /**
      * 字体加粗或相反
-     * @param valid,是否有效
      * */
-    void bold(boolean valid);
+    void bold();
     /**
      * 斜体或相反
-     *  @param valid,是否有效
      * */
-    void italic(boolean valid);
+    void italic();
     /**
      * 下划线或相反
-     *  @param valid,是否有效
      * */
-    void underline(boolean valid);
+    void underline();
     /**
      * 贯穿线或去除
      *  @param valid,是否有效
      * */
-    void strikethrough(boolean valid);
+    void strikethrough();
     /**
      * 项目符号或去除
-     *  @param valid,是否有效
      * */
-    void bullet(boolean valid);
+    void bullet();
     /**
      * 段首竖线，引用符号
-     *  @param valid,是否有效
      * */
-    void quote(boolean valid);
+    void quote();
     /**
      * 超链接，或去除
      *  @param link,超链接
@@ -92,13 +87,4 @@ public interface LightNote extends TextWatcher{
      * 去除所有富文本格式
      * */
     void clearFormats();
-    /**
-     * 转换为Html格式
-     * */
-    String toHtml();
-    /**
-     * 从Html格式转换来
-     * */
-    void fromHtml(String source);
-
 }

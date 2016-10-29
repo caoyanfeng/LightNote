@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">LightNote</string>
 
-    <string name="app_repo">https://github.com/mthli/Knife</string>
+    <string name="app_repo">https://github.com/caoyanfeng/LightNote</string>
 
     <!-- Menu -->
     <string name="menu_undo">Undo</string>
