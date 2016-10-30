@@ -2,6 +2,7 @@ package name.free.lightnote;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -19,6 +20,7 @@ import name.free.lithtnote.LightNote;
 import name.free.lithtnote.LightNoteImp;
 
 public class MainActivity extends AppCompatActivity {
+    private static final int PHOTO_REQUEST_GALLERY=0x001;
     private LightNoteImp lightNote;
 
     @Override
@@ -202,10 +204,27 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(getResources().getString(R.string.app_repo)));
                 startActivity(intent);
                 break;
+            case R.id.insert_image:
+                Intent intent2 = new Intent(Intent.ACTION_PICK);
+                intent2.setType("image/*");
+                startActivityForResult(intent2, PHOTO_REQUEST_GALLERY);
+                break;
             default:
                 break;
         }
 
         return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode==RESULT_OK&&requestCode==PHOTO_REQUEST_GALLERY){
+            if (data != null) {
+                final Uri uri = data.getData();
+                lightNote.imageSpan(MainActivity.this,uri);
+            }
+        }
+
     }
 }

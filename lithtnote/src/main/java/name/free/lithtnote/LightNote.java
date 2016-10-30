@@ -2,7 +2,10 @@ package name.free.lithtnote;
 
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.text.TextWatcher;
 
 /**
@@ -17,6 +20,7 @@ public interface LightNote extends TextWatcher{
     int FORMAT_BULLET = 0x05;
     int FORMAT_QUOTE = 0x06;
     int FORMAT_LINK = 0x07;
+    int FORMAT_IMAGE = 0x08;
     /**
      * 字体加粗或相反
      * */
@@ -46,6 +50,11 @@ public interface LightNote extends TextWatcher{
      *  @param context,用于生成对话框
      * */
     void link(Activity context);
+    /**
+     * 插入图片
+     *  @param fileUri,文件命，包含路径
+     * */
+    void imageSpan(Activity context, Uri fileUri);
     /**
      * 去除所有富文本格式
      * */

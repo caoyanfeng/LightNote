@@ -19,5 +19,9 @@
         android:id="@+id/github"
         android:title="@string/menu_github"
         app:showAsAction="collapseActionView"></item>
+    <item
+        android:id="@+id/insert_image"
+        android:title="@string/menu_insert_image"
+        app:showAsAction="collapseActionView"></item>
 
 </menu>

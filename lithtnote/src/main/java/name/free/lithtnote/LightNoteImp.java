@@ -3,14 +3,23 @@ package name.free.lithtnote;
 import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.TypedArray;
+import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
 import android.text.style.BulletSpan;
+import android.text.style.ImageSpan;
 import android.text.style.QuoteSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
@@ -21,6 +30,8 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -144,6 +155,7 @@ public class LightNoteImp extends EditText implements LightNote {
         Editable editable = getEditableText();
         T[] spans = editable.getSpans(start, end, t);
         for (T span : spans) {
+            //bold和italic都是StyleSpan类型，需要再保证style
             if (span.getClass() == StyleSpan.class && ((StyleSpan) span).getStyle() != style) {
                 continue;
             }
@@ -313,7 +325,14 @@ public class LightNoteImp extends EditText implements LightNote {
         link(context, getSelectionStart(), getSelectionEnd());
     }
 
-    public void link(Activity context, final int start, final int end) {
+    @Override
+    public void imageSpan(Activity context, Uri fileUri) {
+        if (fileUri!=null){
+            getEditableText().setSpan(new ImageSpan(context,fileUrigit,ImageSpan.ALIGN_BASELINE), getSelectionStart(), getSelectionEnd(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        }
+    }
+
+    public void link(final Activity context, final int start, final int end) {
         boolean valid = !containStyle(URLSpan.class, FORMAT_LINK, getSelectionStart(), getSelectionEnd());
         if (valid) {
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -322,13 +341,23 @@ public class LightNoteImp extends EditText implements LightNote {
             builder.setView(editText);
             builder.setTitle(R.string.dialog_title);
             builder.setNegativeButton(R.string.dialog_button_cancel, null);
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            builder.setPositiveButton(R.string.dialog_button_ok, new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     // DO NOTHING HERE
                     final String link = editText.getText().toString();
                     if (link.length() > 0) {
-                        styleValid(new URLSpan(link), start, end);
+                        styleValid(new URLSpan(link){
+                            @Override
+                            public void onClick(View widget) {
+                                super.onClick(widget);
+                                Uri uri = Uri.parse(link);
+                                Intent it = new Intent(Intent.ACTION_VIEW,uri);
+                                it.setClassName("com.android.browser", "com.android.browser.BrowserActivity");
+                                context.startActivity(it);
+                            }
+                        }, start, end);
+                        setMovementMethod(LinkMovementMethod.getInstance());
                     }
                 }
             });

@@ -7,6 +7,7 @@
     <string name="menu_undo">Undo</string>
     <string name="menu_redo">Redo</string>
     <string name="menu_github">GitHub</string>
+    <string name="menu_insert_image">Insert Image</string>
 
     <!-- Dialog -->
     <string name="dialog_title">Insert link</string>
