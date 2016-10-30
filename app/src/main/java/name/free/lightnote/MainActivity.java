@@ -152,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
         link.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showLinkDialog();
+               lightNote.link(MainActivity.this);
             }
         });
 
@@ -182,41 +182,6 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
-    }
-
-    private void showLinkDialog() {
-        final int start = lightNote.getSelectionStart();
-        final int end = lightNote.getSelectionEnd();
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setCancelable(false);
-
-        View view = getLayoutInflater().inflate(R.layout.dialog_link, null, false);
-        final EditText editText = (EditText) view.findViewById(R.id.edit);
-        builder.setView(view);
-        builder.setTitle(R.string.dialog_title);
-
-        builder.setPositiveButton(R.string.dialog_button_ok, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String link = editText.getText().toString().trim();
-                if (TextUtils.isEmpty(link)) {
-                    return;
-                }
-
-                // When KnifeText lose focus, use this method
-                lightNote.link(link, start, end);
-            }
-        });
-
-        builder.setNegativeButton(R.string.dialog_button_cancel, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // DO NOTHING HERE
-            }
-        });
-
-        builder.create().show();
     }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

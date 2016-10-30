@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">LithtNote</string>
+    <string name="dialog_title">Insert link</string>
+    <string name="dialog_edit_hint">http(s)://</string>
+    <string name="dialog_button_ok">OK</string>
+    <string name="dialog_button_cancel">Cancel</string>
 </resources>

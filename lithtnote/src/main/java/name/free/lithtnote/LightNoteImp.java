@@ -1,8 +1,11 @@
 package name.free.lithtnote;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.res.TypedArray;
 import android.graphics.Typeface;
+import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -14,6 +17,7 @@ import android.text.style.StyleSpan;
 import android.text.style.URLSpan;
 import android.text.style.UnderlineSpan;
 import android.util.AttributeSet;
+import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
@@ -29,7 +33,7 @@ import java.util.List;
  * <p>1、{@link #bullet()}</p>
  * <p>2、{@link #quote()}}</p>
  * <p>相对于Knife，功能优化包括：</p>
- * <p>1、{@link #contains(int)}</p>
+ * <p>1、{@link #containStyle(Class, int, int, int)}</p>
  * <p>2、{@link #bullet()}</p>
  * <p>3、{@link #quote()}}</p>
  */
@@ -51,7 +55,6 @@ public class LightNoteImp extends EditText implements LightNote {
 
     private SpannableStringBuilder inputBefore;
     private Editable inputLast;
-
 
     public LightNoteImp(Context context) {
         super(context);
@@ -110,121 +113,52 @@ public class LightNoteImp extends EditText implements LightNote {
     // BoldSpan & ItalicSpan ===================================================================================
     @Override
     public void bold() {
-        boolean valid=!contains(LightNote.FORMAT_BOLD);
+        boolean valid = !containStyle(StyleSpan.class, Typeface.BOLD, getSelectionStart(), getSelectionEnd());
         if (valid) {
-            styleValid(Typeface.BOLD);
+            styleValid(new StyleSpan(FORMAT_BOLD), getSelectionStart(), getSelectionEnd());
         } else {
-            styleInValid(Typeface.BOLD);
+            styleInValid(StyleSpan.class, Typeface.BOLD, getSelectionStart(), getSelectionEnd());
         }
     }
 
     @Override
     public void italic() {
-        boolean valid=!contains(LightNote.FORMAT_ITALIC);
+        boolean valid = !containStyle(StyleSpan.class, Typeface.ITALIC, getSelectionStart(), getSelectionEnd());
         if (valid) {
-            styleValid(Typeface.ITALIC);
+            styleValid(new StyleSpan(FORMAT_ITALIC), getSelectionStart(), getSelectionEnd());
         } else {
-            styleInValid(Typeface.ITALIC);
+            styleInValid(StyleSpan.class, Typeface.ITALIC, getSelectionStart(), getSelectionEnd());
         }
     }
 
-    private void styleValid(int style) {
-        styleValid(style, getSelectionStart(), getSelectionEnd());
-    }
-
-    @Override
-    public void styleValid(int style, int start, int end) {
-        switch (style) {
-            case Typeface.NORMAL:
-            case Typeface.BOLD:
-            case Typeface.ITALIC:
-            case Typeface.BOLD_ITALIC:
-                break;
-            default:
-                return;
-
-        }
+    private void styleValid(Object span, int start, int end) {
         if (start >= end) return;
-        getEditableText().setSpan(new StyleSpan(style), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-    }
-
-    public void styleInValid(int style) {
-        styleInValid(style, getSelectionStart(), getSelectionEnd());
-
+        getEditableText().setSpan(span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
     }
 
     //调试
-    @Override
-    public void styleInValid(int style, int start, int end) {
-        switch (style) {
-            case Typeface.NORMAL:
-            case Typeface.BOLD:
-            case Typeface.ITALIC:
-            case Typeface.BOLD_ITALIC:
-                break;
-            default:
-                return;
-        }
-
+    public <T> void styleInValid(Class<T> t, int style, int start, int end) {
         if (start >= end) {
             return;
         }
         Editable editable = getEditableText();
-        StyleSpan[] spans = editable.getSpans(start, end, StyleSpan.class);
-        for (StyleSpan span : spans) {
-            if (span.getStyle() == style) {
-                int mStart = editable.getSpanStart(span);//span开始的位置
-                int mEnd = editable.getSpanEnd(span);//span结束的位置
-                editable.removeSpan(span);
-                if (mStart < start) {
-                    styleValid(style, mStart, start);
-                }
-                if (mEnd > end) {
-                    styleValid(style, end, mEnd);
-                }
+        T[] spans = editable.getSpans(start, end, t);
+        for (T span : spans) {
+            if (span.getClass() == StyleSpan.class && ((StyleSpan) span).getStyle() != style) {
+                continue;
             }
-        }
-
-    }
-
-    /**
-     * @return start和end的范围刚好在style类型的span的起点和终点内，即[start,end]∈[mStart,mEnd]，则返回true，否则返回false。
-     */
-    private boolean containStyle(int style, int start, int end) {
-        switch (style) {
-            case Typeface.NORMAL:
-            case Typeface.BOLD:
-            case Typeface.ITALIC:
-            case Typeface.BOLD_ITALIC:
-                break;
-            default:
-                return false;
-        }
-        if (start > end) {
-            return false;
-        }
-        Editable editable = getEditableText();
-        if (start == end) {
-            if (start - 1 < 0 || start + 1 > editable.length()) {
-                return false;
-            } else {
-                StyleSpan[] before = editable.getSpans(start - 1, start, StyleSpan.class);
-                StyleSpan[] after = editable.getSpans(start, start + 1, StyleSpan.class);
-                return before.length > 0 && after.length > 0 && before[0].getStyle() == style && after[0].getStyle() == style;
+            int mStart = editable.getSpanStart(span);//span开始的位置
+            int mEnd = editable.getSpanEnd(span);//span结束的位置
+            editable.removeSpan(span);
+            if (style == FORMAT_LINK) {//链接不再把[start,end]外的部分重新加上
+                continue;
             }
-        } else {
-            StyleSpan[] spans = editable.getSpans(start, end, StyleSpan.class);
-            for (StyleSpan span : spans) {
-                if (span.getStyle() == style) {
-                    int mStart = editable.getSpanStart(span);//span开始的位置
-                    int mEnd = editable.getSpanEnd(span);//span结束的位置
-                    if (start >= mStart && end <= mEnd) {
-                        return true;
-                    }
-                }
+            if (mStart < start) {
+                styleValid(style, mStart, start);
             }
-            return false;
+            if (mEnd > end) {
+                styleValid(style, end, mEnd);
+            }
         }
 
     }
@@ -232,57 +166,18 @@ public class LightNoteImp extends EditText implements LightNote {
     // UnderlineSpan ===================================================================================
     @Override
     public void underline() {
-        boolean valid=!contains(FORMAT_UNDERLINED);
+        boolean valid = !containStyle(UnderlineSpan.class, FORMAT_UNDERLINED, getSelectionStart(), getSelectionEnd());
         if (valid) {
-            underlineValid();
+            styleValid(new UnderlineSpan(), getSelectionStart(), getSelectionEnd());
         } else {
-            underlineInValid();
-        }
-    }
-
-    private void underlineValid() {
-        underlineValid(getSelectionStart(), getSelectionEnd());
-    }
-
-    @Override
-    public void underlineValid(int start, int end) {
-        if (start >= end) {
-            return;
-        }
-        getEditableText().setSpan(new UnderlineSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-    }
-
-    private void underlineInValid() {
-        underlineInValid(getSelectionStart(), getSelectionEnd());
-
-    }
-
-    //调试
-    @Override
-    public void underlineInValid(int start, int end) {
-        if (start >= end) {
-            return;
-        }
-        UnderlineSpan[] spans = getEditableText().getSpans(start, end, UnderlineSpan.class);
-        Editable editable = getEditableText();
-        for (UnderlineSpan span : spans) {
-            int mStart = editable.getSpanStart(span);//span开始的位置
-            int mEnd = editable.getSpanEnd(span);//span结束的位置
-            editable.removeSpan(span);
-            if (mStart < start) {
-                underlineValid(mStart, start);
-            }
-            if (mEnd > end) {
-                underlineValid(end, mEnd);
-            }
+            styleInValid(UnderlineSpan.class, FORMAT_UNDERLINED, getSelectionStart(), getSelectionEnd());
         }
     }
 
     /**
      * @return start和end的范围刚好在underline类型的span的起点和终点内，即[start,end]∈[mStart,mEnd]，则返回true，否则返回false。
      */
-    protected <T> boolean containStyle(Class<T> t, int start, int end) {
+    protected <T> boolean containStyle(Class<T> t, int style, int start, int end) {
         if (start > end) {
             return false;
         }
@@ -298,6 +193,9 @@ public class LightNoteImp extends EditText implements LightNote {
         } else {
             T[] spans = editable.getSpans(start, end, t);
             for (T span : spans) {
+                if (span.getClass() == StyleSpan.class && ((StyleSpan) span).getStyle() != style) {//如果是bold或italic
+                    continue;
+                }
                 int mStart = editable.getSpanStart(span);//span开始的位置
                 int mEnd = editable.getSpanEnd(span);//span结束的位置
                 if (start >= mStart && end <= mEnd) {
@@ -311,52 +209,15 @@ public class LightNoteImp extends EditText implements LightNote {
     // StrikethroughSpan ===================================================================================
     @Override
     public void strikethrough() {
-        boolean valid=!contains(FORMAT_STRIKETHROUGH);
+        boolean valid = !containStyle(StrikethroughSpan.class, FORMAT_STRIKETHROUGH, getSelectionStart(), getSelectionEnd());
         if (valid) {
-            strikethroughValid();
+            styleValid(new StrikethroughSpan(), getSelectionStart(), getSelectionEnd());
         } else {
-            strikethroughInValid();
+            styleInValid(StrikethroughSpan.class, FORMAT_STRIKETHROUGH, getSelectionStart(), getSelectionEnd());
         }
     }
 
-    public void strikethroughValid() {
-        strikethroughValid(getSelectionStart(), getSelectionEnd());
 
-    }
-
-    @Override
-    public void strikethroughValid(int start, int end) {
-        if (start >= end) {
-            return;
-        }
-
-        getEditableText().setSpan(new StrikethroughSpan(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-    }
-
-    public void strikethroughInValid() {
-        strikethroughInValid(getSelectionStart(), getSelectionEnd());
-    }
-
-    @Override
-    public void strikethroughInValid(int start, int end) {
-        if (start >= end) {
-            return;
-        }
-        Editable editable = getEditableText();
-        StrikethroughSpan[] spans = editable.getSpans(start, end, StrikethroughSpan.class);
-        for (StrikethroughSpan span : spans) {
-            int mStart = editable.getSpanStart(span);//span开始的位置
-            int mEnd = editable.getSpanEnd(span);//span结束的位置
-            editable.removeSpan(span);
-            if (mStart < start) {
-                strikethroughValid(mStart, start);
-            }
-            if (mEnd > end) {
-                strikethroughValid(end, mEnd);
-            }
-        }
-
-    }
     // BulletSpan ===================================================================================
 
     /**
@@ -448,62 +309,34 @@ public class LightNoteImp extends EditText implements LightNote {
 
     // URLSpan =====================================================================================
     @Override
-    public void link(String link) {
-        link(link, getSelectionStart(), getSelectionEnd());
+    public void link(Activity context) {
+        link(context, getSelectionStart(), getSelectionEnd());
     }
 
-    public void link(String link, int start, int end) {
-        if (link != null && !TextUtils.isEmpty(link.trim())) {
-            linkValid(link, start, end);
-        } else {
-            linkInvalid(start, end);
-        }
-    }
-
-    protected void linkValid(String link, int start, int end) {
-        if (start >= end) {
-            return;
-        }
-
-        linkInvalid(start, end);
-        getEditableText().setSpan(new URLSpan(link), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-    }
-
-    // Remove all span in selection, not like the boldInvalid()
-    protected void linkInvalid(int start, int end) {
-        if (start >= end) {
-            return;
-        }
-
-        URLSpan[] spans = getEditableText().getSpans(start, end, URLSpan.class);
-        for (URLSpan span : spans) {
-            getEditableText().removeSpan(span);
-        }
-    }
-
-    protected boolean containLink(int start, int end) {
-        if (start > end) {
-            return false;
-        }
-
-        if (start == end) {
-            if (start - 1 < 0 || start + 1 > getEditableText().length()) {
-                return false;
-            } else {
-                URLSpan[] before = getEditableText().getSpans(start - 1, start, URLSpan.class);
-                URLSpan[] after = getEditableText().getSpans(start, start + 1, URLSpan.class);
-                return before.length > 0 && after.length > 0;
-            }
-        } else {
-            StringBuilder builder = new StringBuilder();
-
-            for (int i = start; i < end; i++) {
-                if (getEditableText().getSpans(i, i + 1, URLSpan.class).length > 0) {
-                    builder.append(getEditableText().subSequence(i, i + 1).toString());
+    public void link(Activity context, final int start, final int end) {
+        boolean valid = !containStyle(URLSpan.class, FORMAT_LINK, getSelectionStart(), getSelectionEnd());
+        if (valid) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            builder.setCancelable(false);
+            final EditText editText = new EditText(context);
+            builder.setView(editText);
+            builder.setTitle(R.string.dialog_title);
+            builder.setNegativeButton(R.string.dialog_button_cancel, null);
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // DO NOTHING HERE
+                    final String link = editText.getText().toString();
+                    if (link.length() > 0) {
+                        styleValid(new URLSpan(link), start, end);
+                    }
                 }
-            }
+            });
+            builder.setNegativeButton("Cancel", null);
+            builder.create().show();
 
-            return getEditableText().subSequence(start, end).toString().equals(builder.toString());
+        } else {
+            styleInValid(URLSpan.class, FORMAT_LINK, start, end);
         }
     }
 
@@ -513,30 +346,12 @@ public class LightNoteImp extends EditText implements LightNote {
         setSelection(getEditableText().length());
     }
 
-    public boolean contains(int format) {
-        switch (format) {
-            case FORMAT_BOLD:
-                return containStyle(Typeface.BOLD, getSelectionStart(), getSelectionEnd());
-            case FORMAT_ITALIC:
-                return containStyle(Typeface.ITALIC, getSelectionStart(), getSelectionEnd());
-            case FORMAT_UNDERLINED:
-                return containStyle(UnderlineSpan.class, getSelectionStart(), getSelectionEnd());
-            case FORMAT_STRIKETHROUGH:
-                return containStyle(StrikethroughSpan.class, getSelectionStart(), getSelectionEnd());
-            case FORMAT_LINK:
-                return containLink(getSelectionStart(), getSelectionEnd());
-            default:
-                return false;
-        }
-    }
-
     @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
         if (!historyEnable || historyWorking) {
             return;
         }
         inputBefore = new SpannableStringBuilder(s);
-
     }
 
     @Override
