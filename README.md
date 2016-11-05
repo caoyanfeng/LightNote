@@ -1,7 +1,7 @@
 # LightNote
 LightNote is an open source Rich Text Editor on the Android,implemented by Span.
 ##说明
-LightNote是一个Android系统上实现的富文本编辑器，借鉴自：https://github.com/mthli/Knife。
+LightNote是一个Android系统上实现的富文本编辑器，借鉴自：https://github.com/mthli/Knife
 ![example.gif](./example.gif "example.gif")
 
 区别于Knife,LightNote主要更新了以下内容：
@@ -21,4 +21,4 @@ LightNote是一个Android系统上实现的富文本编辑器，借鉴自：http
 ![image](./device-2016-11-05-213930.png)
 
 ##apk下载
-根目录下可以直接下载：https://github.com/caoyanfeng/LightNote/blob/master/app-debug.apk。
+根目录下可以直接下载：https://github.com/caoyanfeng/LightNote/blob/master/app-debug.apk
