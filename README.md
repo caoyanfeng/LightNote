@@ -4,7 +4,7 @@ LightNote is an open source Rich Text Editor on the Android,implemented by Span.
 LightNote是一个Android系统上实现的富文本编辑器，借鉴自：https://github.com/mthli/Knife。
 ![example.gif](./example.gif "example.gif")
 
-区别于Knife,LiteNote主要更新了以下内容：
+区别于Knife,LightNote主要更新了以下内容：
 
  - 修复了添加项目符号、段落引用符号时的bug,例如，knife在下面的选中情况下，首行和末行不会添加项目符号、段落引用符号；
 ![image](./screenshot2.png)
