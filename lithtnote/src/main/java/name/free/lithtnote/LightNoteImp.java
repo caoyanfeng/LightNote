@@ -5,15 +5,11 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.TypedArray;
-import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Typeface;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
+import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
@@ -27,11 +23,8 @@ import android.text.style.URLSpan;
 import android.text.style.UnderlineSpan;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -47,6 +40,8 @@ import java.util.List;
  * <p>1、{@link #containStyle(Class, int, int, int)}</p>
  * <p>2、{@link #bullet()}</p>
  * <p>3、{@link #quote()}}</p>
+ * <p>相对于Knife，新功能包括：</p>
+ * <p>1、插入图片</p>
  */
 public class LightNoteImp extends EditText implements LightNote {
     private int bulletColor = 0;//bullet的颜色
@@ -328,8 +323,20 @@ public class LightNoteImp extends EditText implements LightNote {
     @Override
     public void imageSpan(Activity context, Uri fileUri) {
         if (fileUri!=null){
-            getEditableText().setSpan(new ImageSpan(context,fileUrigit,ImageSpan.ALIGN_BASELINE), getSelectionStart(), getSelectionEnd(), Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+            ImageSpan imageSpan=new ImageSpan(context,fileUri,ImageSpan.ALIGN_BASELINE);
+            String image="Image";
+            SpannableString spannableString = new SpannableString(image);
+            spannableString.setSpan(imageSpan, 0, image.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            int index = getSelectionStart();
+            Editable editText = getEditableText();
+            if (index < 0 || index >= editText.length()) {
+                editText.append(spannableString);
+            } else {
+                editText.insert(index, spannableString);
+            }
+            editText.insert(index+spannableString.length(),"\n");
         }
+
     }
 
     public void link(final Activity context, final int start, final int end) {
