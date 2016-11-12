@@ -25,6 +25,8 @@ import android.util.AttributeSet;
 import android.view.View;
 import android.widget.EditText;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -36,6 +38,8 @@ import java.util.List;
  * <p>相对于Knife，修复的bug包括</p>
  * <p>1、{@link #bullet()}</p>
  * <p>2、{@link #quote()}}</p>
+ * <P>3、{@link #paragraphSymbol(Class, int, int)},项目符号和引用符合并存的问题</P>
+ * <P>4、{@link #paragraphSymbol(Class, int, int)},项目符号和引用符合有空行的问题</P>
  * <p>相对于Knife，功能优化包括：</p>
  * <p>1、{@link #containStyle(Class, int, int, int)}</p>
  * <p>2、{@link #bullet()}</p>
@@ -87,15 +91,15 @@ public class LightNoteImp extends EditText implements LightNote {
     private void init(AttributeSet attrs) {
         TypedArray array = getContext().obtainStyledAttributes(attrs, R.styleable.LightNoteImp);
         bulletColor = array.getColor(R.styleable.LightNoteImp_bulletColor, 0);//项目符号的颜色
-        bulletRadius = array.getDimensionPixelSize(R.styleable.LightNoteImp_bulletRadius, 0);//项目符号的半径
+        bulletRadius = array.getDimensionPixelSize(R.styleable.LightNoteImp_bulletRadius, 0);//项目符号的半径，这个是private类型
         bulletGapWidth = array.getDimensionPixelSize(R.styleable.LightNoteImp_bulletGapWidth, 0);//项目符合和文本之间的间隙
         historyEnable = array.getBoolean(R.styleable.LightNoteImp_historyEnable, true);//是否支持历史
         historySize = array.getInt(R.styleable.LightNoteImp_historySize, 100);//支持的历史长度，默认100
         linkColor = array.getColor(R.styleable.LightNoteImp_linkColor, 0);//链接颜色
         linkUnderline = array.getBoolean(R.styleable.LightNoteImp_linkUnderline, true);
         quoteColor = array.getColor(R.styleable.LightNoteImp_quoteColor, 0);//引用颜色
-        quoteStripeWidth = array.getDimensionPixelSize(R.styleable.LightNoteImp_quoteStripeWidth, 0);
-        quoteGapWidth = array.getDimensionPixelSize(R.styleable.LightNoteImp_quoteGapWidth, 0);
+        quoteStripeWidth = array.getDimensionPixelSize(R.styleable.LightNoteImp_quoteStripeWidth, 0);//private类型
+        quoteGapWidth = array.getDimensionPixelSize(R.styleable.LightNoteImp_quoteGapWidth, 0);//private类型
         array.recycle();
         if (historyEnable && historySize <= 0) {
             throw new IllegalArgumentException("historySize must > 0");
@@ -258,7 +262,7 @@ public class LightNoteImp extends EditText implements LightNote {
         int bulletSum = 0;//选中区域bullet的个数
         int lineSum = 0;//选中区域的非空行数
         List<T[]> spanList = new ArrayList<>();//选中区域所有的bullet
-        for (int i = 0; i < lines.length; i++) {
+        for (int i = 0; i <lines.length; i++) {
             int paragraphEnd = paragraphStart + lines[i].length();//每一段的结尾位置
             if (lineSum > 0) {//已经遇到选中区域的起点
                 if (lines[i].length() != 0) {
@@ -304,12 +308,46 @@ public class LightNoteImp extends EditText implements LightNote {
         }
     }
 
+    /**
+     * 通过反射机制来实例化BulletSpan、QuoteSpan.
+     * 注意：如果某一行既有BulletSpan，也有QuoteSpan，则QuoteSpan必须在BulletSpan之前
+     * */
     private <T> void paragraphSymbol(Class<T> t, int start, int end) {
+        if (start==end){//表明选中区域有空行
+            getText().insert(start," ");
+            end++;
+        }
         try {
-            getEditableText().setSpan(t.newInstance(), start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            Object what=null;
+            if (t==BulletSpan.class){
+                Constructor cons=t.getConstructor(int.class,int.class);
+                what=cons.newInstance(bulletGapWidth,bulletColor);
+            }else if (t==QuoteSpan.class){
+                BulletSpan[] spans = getEditableText().getSpans(start, end, BulletSpan.class);
+                if (spans.length!=0){
+                    for (BulletSpan span:spans){
+                        getText().removeSpan(span);
+                    }
+                }
+                Constructor cons=t.getConstructor(int.class);
+                what=cons.newInstance(quoteColor);
+                getEditableText().setSpan(what, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                if (spans.length!=0){
+                   for (BulletSpan span:spans){
+                       getEditableText().setSpan(span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                   }
+                }
+                return;
+            }
+            if (what==null)what=t.newInstance();
+            getEditableText().setSpan(what, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } catch (InstantiationException e) {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
             e.printStackTrace();
         }
     }
