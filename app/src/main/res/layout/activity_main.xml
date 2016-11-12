@@ -116,4 +116,5 @@
         app:quoteStripeWidth="@dimen/quote_stripe_width"
         app:quoteGapWidth="@dimen/quote_gap_width">
     </name.free.lithtnote.LightNoteImp>
+    <include layout="@layout/progressbar"/>
 </RelativeLayout>

@@ -13,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 
@@ -22,12 +23,14 @@ import name.free.lithtnote.LightNoteImp;
 public class MainActivity extends AppCompatActivity {
     private static final int PHOTO_REQUEST_GALLERY=0x001;
     private LightNoteImp lightNote;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         lightNote=(LightNoteImp) findViewById(R.id.light_note);
+        progressBar=(ProgressBar)findViewById(R.id.progress_bar);
         setupBold();
         setupItalic();
         setupUnderline();
@@ -222,9 +225,26 @@ public class MainActivity extends AppCompatActivity {
         if (resultCode==RESULT_OK&&requestCode==PHOTO_REQUEST_GALLERY){
             if (data != null) {
                 final Uri uri = data.getData();
-                lightNote.imageSpan(MainActivity.this,uri);
+                lightNote.imageSpan(MainActivity.this, uri, new LightNote.LoadImageListener() {
+                    @Override
+                    public void onStart() {
+                        progressBar.setVisibility(View.VISIBLE);
+
+                    }
+
+                    @Override
+                    public void onResume() {
+
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        progressBar.setVisibility(View.GONE);
+                    }
+                });
             }
         }
 
     }
+
 }

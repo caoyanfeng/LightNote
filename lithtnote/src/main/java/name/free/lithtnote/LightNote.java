@@ -13,6 +13,15 @@ import android.text.TextWatcher;
  * LightNote接口
  */
 public interface LightNote extends TextWatcher{
+    /**
+     * 图片加载的监听
+     * */
+   interface LoadImageListener{
+        void onStart();
+        void onResume();
+        void onFinish();
+    }
+
     int FORMAT_BOLD = Typeface.BOLD;//1
     int FORMAT_ITALIC = Typeface.ITALIC;//2
     int FORMAT_UNDERLINED = 0x03;
@@ -54,7 +63,7 @@ public interface LightNote extends TextWatcher{
      * 插入图片
      *  @param fileUri,文件命，包含路径
      * */
-    void imageSpan(Activity context, Uri fileUri);
+    void imageSpan(Activity context, Uri fileUri,LoadImageListener loadImageListener);
     /**
      * 去除所有富文本格式
      * */

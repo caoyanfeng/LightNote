@@ -4,9 +4,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.text.Editable;
 import android.text.SpannableString;
@@ -48,6 +51,7 @@ import java.util.List;
  * <p>1、插入图片</p>
  */
 public class LightNoteImp extends EditText implements LightNote {
+    private LoadImageListener loadImageListener;
     private int bulletColor = 0;//bullet的颜色
     private int bulletRadius = 0;//bullet的半径
     private int bulletGapWidth = 0;//
@@ -313,7 +317,7 @@ public class LightNoteImp extends EditText implements LightNote {
      * 注意：如果某一行既有BulletSpan，也有QuoteSpan，则QuoteSpan必须在BulletSpan之前
      * */
     private <T> void paragraphSymbol(Class<T> t, int start, int end) {
-        if (start==end){//表明选中区域有空行
+        if (start==end){//表明选中区域有空行，则通过插入空白符来使得改行可以有BulletSpan或QuoteSpan
             getText().insert(start," ");
             end++;
         }
@@ -358,21 +362,22 @@ public class LightNoteImp extends EditText implements LightNote {
         link(context, getSelectionStart(), getSelectionEnd());
     }
 
+    /**
+     * 插入本地图片，图片太大时不能加载。这里最大的长宽根据横竖屏来粗略判断，长度是宽度的两倍。
+     * @param context 插入图片的上下文.
+     * @param fileUri 图片Uri.
+     * */
     @Override
-    public void imageSpan(Activity context, Uri fileUri) {
+    public void imageSpan(Activity context, Uri fileUri,LoadImageListener loadImageListener) {
         if (fileUri!=null){
-            ImageSpan imageSpan=new ImageSpan(context,fileUri,ImageSpan.ALIGN_BASELINE);
-            String image="Image";
-            SpannableString spannableString = new SpannableString(image);
-            spannableString.setSpan(imageSpan, 0, image.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            int index = getSelectionStart();
-            Editable editText = getEditableText();
-            if (index < 0 || index >= editText.length()) {
-                editText.append(spannableString);
-            } else {
-                editText.insert(index, spannableString);
+            Configuration mConfiguration = context.getResources().getConfiguration();
+            BitMapAsyncTask bitMapAsyncTask=null;
+            if (mConfiguration.orientation==mConfiguration.ORIENTATION_PORTRAIT){//竖屏的时候最大宽度是getWidth()
+               bitMapAsyncTask=new BitMapAsyncTask(context,getWidth(),getWidth()*2,loadImageListener);
+            }else if (mConfiguration.orientation==mConfiguration.ORIENTATION_LANDSCAPE){//横屏的时候最大宽度是getWidth()/2
+                bitMapAsyncTask=new BitMapAsyncTask(context,getWidth()/2,getWidth(),loadImageListener);
             }
-            editText.insert(index+spannableString.length(),"\n");
+            bitMapAsyncTask.execute(fileUri);
         }
 
     }
@@ -493,4 +498,68 @@ public class LightNoteImp extends EditText implements LightNote {
         }
         return true;
     }
+    /**
+     * 异步加载图片.
+     * */
+    private class BitMapAsyncTask extends AsyncTask<Uri,Void,Bitmap>{
+        private Activity mContext;
+        private Uri imageUri;
+        private int mMaxWidth;
+        private int mMaxHeight;
+        private LoadImageListener mLoadImageListener;
+
+        public BitMapAsyncTask(Activity context,int maxWidth,int maxHeight){
+            mContext=context;
+            mMaxHeight=maxHeight;
+            mMaxWidth=maxWidth;
+        }
+        public BitMapAsyncTask(Activity context,int maxWidth,int maxHeight,LoadImageListener loadImageListener){
+           this(context,maxWidth,maxHeight);
+            mLoadImageListener=loadImageListener;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            if (mLoadImageListener!=null){
+                mLoadImageListener.onStart();
+            }
+
+        }
+
+        @Override
+        protected Bitmap doInBackground(Uri... params) {
+            imageUri=params[0];
+            if (mLoadImageListener!=null){
+                mLoadImageListener.onResume();
+            }
+            if (mMaxWidth>mMaxHeight){//如果
+                return BitMapUtil.getScaledBitMap(imageUri,mMaxHeight,mMaxWidth);
+            }else {
+                return BitMapUtil.getScaledBitMap(imageUri,mMaxWidth,mMaxHeight);
+            }
+
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            super.onPostExecute(bitmap);
+            ImageSpan imageSpan=new ImageSpan(mContext,bitmap,ImageSpan.ALIGN_BASELINE);
+            String image=imageUri.toString();
+            SpannableString spannableString = new SpannableString(image);
+            spannableString.setSpan(imageSpan, 0, image.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            int index = getSelectionStart();
+            Editable editText = getEditableText();
+            if (index < 0 || index >= editText.length()) {
+                editText.append(spannableString);
+            } else {
+                editText.insert(index, spannableString);
+            }
+            editText.insert(index+spannableString.length(),"\n");
+            if (mLoadImageListener!=null){
+                mLoadImageListener.onFinish();
+            }
+        }
+    }
+
 }
