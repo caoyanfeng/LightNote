@@ -18,6 +18,7 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.BulletSpan;
+import android.text.style.ClickableSpan;
 import android.text.style.ImageSpan;
 import android.text.style.QuoteSpan;
 import android.text.style.StrikethroughSpan;
@@ -27,6 +28,7 @@ import android.text.style.UnderlineSpan;
 import android.util.AttributeSet;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -51,7 +53,7 @@ import java.util.List;
  * <p>1、插入图片</p>
  */
 public class LightNoteImp extends EditText implements LightNote {
-    private LoadImageListener loadImageListener;
+    private  ImageClickListener mImageClickListener;
     private int bulletColor = 0;//bullet的颜色
     private int bulletRadius = 0;//bullet的半径
     private int bulletGapWidth = 0;//
@@ -69,6 +71,7 @@ public class LightNoteImp extends EditText implements LightNote {
 
     private SpannableStringBuilder inputBefore;
     private Editable inputLast;
+    private Context mContext;
 
     public LightNoteImp(Context context) {
         super(context);
@@ -77,16 +80,19 @@ public class LightNoteImp extends EditText implements LightNote {
     public LightNoteImp(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(attrs);
+        mContext=context;
     }
 
     public LightNoteImp(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(attrs);
+        mContext=context;
     }
 
     public LightNoteImp(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(attrs);
+        mContext=context;
     }
 
     /**
@@ -426,6 +432,11 @@ public class LightNoteImp extends EditText implements LightNote {
     }
 
     @Override
+    public void setImageClickListener(ImageClickListener imageClickListener) {
+        mImageClickListener=imageClickListener;
+    }
+
+    @Override
     public void beforeTextChanged(CharSequence s, int start, int count, int after) {
         if (!historyEnable || historyWorking) {
             return;
@@ -498,6 +509,7 @@ public class LightNoteImp extends EditText implements LightNote {
         }
         return true;
     }
+
     /**
      * 异步加载图片.
      * */
@@ -541,13 +553,27 @@ public class LightNoteImp extends EditText implements LightNote {
 
         }
 
+        /**
+         * 参考：http://blog.csdn.net/u010132993/article/details/51260539
+         * 设置ImageSpan的同时，也设置了一个对应的ClickableSpan.
+         * */
         @Override
-        protected void onPostExecute(Bitmap bitmap) {
+        protected void onPostExecute(final Bitmap bitmap) {
             super.onPostExecute(bitmap);
             ImageSpan imageSpan=new ImageSpan(mContext,bitmap,ImageSpan.ALIGN_BASELINE);
             String image=imageUri.toString();
             SpannableString spannableString = new SpannableString(image);
             spannableString.setSpan(imageSpan, 0, image.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            ClickableSpan clickSpan=new ClickableSpan() {
+                @Override
+                public void onClick(View widget) {
+                    if (mImageClickListener!=null){
+                        mImageClickListener.onClick(imageUri,bitmap);
+                    }
+                }
+            };
+            spannableString.setSpan(clickSpan, 0, image.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             int index = getSelectionStart();
             Editable editText = getEditableText();
             if (index < 0 || index >= editText.length()) {
@@ -556,6 +582,7 @@ public class LightNoteImp extends EditText implements LightNote {
                 editText.insert(index, spannableString);
             }
             editText.insert(index+spannableString.length(),"\n");
+            setMovementMethod(LinkMovementMethod.getInstance());
             if (mLoadImageListener!=null){
                 mLoadImageListener.onFinish();
             }
