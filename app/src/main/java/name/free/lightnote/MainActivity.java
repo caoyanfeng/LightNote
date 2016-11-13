@@ -1,21 +1,22 @@
 package name.free.lightnote;
 
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.drawable.Drawable;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.support.v7.app.AlertDialog;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.TextUtils;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+
+import java.io.File;
 
 import name.free.lithtnote.LightNote;
 import name.free.lithtnote.LightNoteImp;
@@ -39,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
         setupQuote();
         setupLink();
         setupClear();
+        lightNote.setImageClickListener(new CustomImageClickListener());
     }
     private void setupBold() {
         ImageButton bold = (ImageButton) findViewById(R.id.bold);
@@ -245,6 +247,24 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+    }
+
+
+    private class CustomImageClickListener implements LightNote.ImageClickListener {
+
+        @Override
+        public void onClick(Uri fileUri,Bitmap bitmap) {
+            Log.d("Tag","fileUri"+fileUri.toString());
+            Log.d("Tag","Height"+bitmap.getHeight());
+            String fileName=fileUri.getPath();
+            if (fileName!=null&&new File(fileName).exists()){
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setDataAndType(fileUri, "image/*");    //设置intent数据和图片格式
+                startActivity(intent);
+            }else {
+                Toast.makeText(MainActivity.this,fileName+"不存在！",Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
 }
